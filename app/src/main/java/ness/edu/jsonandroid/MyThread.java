@@ -9,6 +9,7 @@ import android.util.Log;
 public class MyThread extends Thread {
     @Override
     public void run() {
-        StreamIO.readWebSite("...");
+        //Uses-permission INTERNET in manifest
+        StreamIO.readWebSite("http://api.androidhive.info/json/movies.json");
     }
 }
