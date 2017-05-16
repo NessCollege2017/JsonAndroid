@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -23,9 +24,8 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
-    ArrayList<Movie> movies = new ArrayList<>();
-    TextView tvMovies;
+public class MainActivity extends AppCompatActivity implements MovieDataSource.OnDataArrivedListener {
+     TextView tvMovies;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -34,50 +34,23 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         tvMovies = (TextView) findViewById(R.id.tvMovies);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Thread movieThread = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        //code that runs in the background
-                        //Uses-permission INTERNET in manifest
-                        try {
-                            String json = StreamIO.readWebSite("http://api.androidhive.info/json/movies.json");
-                            //Decide if jsonObject Or JSON Array;
-                            JSONArray moviesArray = new JSONArray(json);
-                            for (int i = 0; i < moviesArray.length(); i++) {
-                                ArrayList<String> genres = new ArrayList<>();
-                                JSONObject movieObject = moviesArray.getJSONObject(i);
-                                String title = movieObject.getString("title");
-                                String image = movieObject.getString("image");
-                                int releaseYear = movieObject.getInt("releaseYear");
-                                double rating = movieObject.getDouble("rating");
-                                JSONArray genresArray = movieObject.getJSONArray("genre");
-                                for (int j = 0; j < genresArray.length(); j++) {
-                                    String genre = genresArray.getString(j);
-                                    genres.add(genre);
-                                }
-                                Movie movie = new Movie(title, image, genres, releaseYear, rating);
-                                movies.add(movie);
-                            }
-                            Log.d("Ness", movies.toString());
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    //code that runs on the UI Thread:
-                                    tvMovies.setText(movies.toString());
-                                }
-                            });
-                        } catch (IOException e) {
-                            //TODO: Handle with dialog
-                            e.printStackTrace();
 
-                        } catch (JSONException ignored) {}
-                    }
-                });
-                movieThread.start();
+        MovieDataSource.getMovies(this);
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+
+    }
+
+    @Override
+    public void onDataArrived(final ArrayList<Movie> movies, final Exception e) {
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (e == null)
+                  tvMovies.setText(movies.toString());
+                else {
+                    Toast.makeText(MainActivity.this, "Error", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
